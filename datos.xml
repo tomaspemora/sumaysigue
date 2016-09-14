@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data>
+   <fl_data>5</fl_data>
+   <r_col_rut>2</r_col_rut>
+   <r_col_data_1>5</r_col_data_1>
+   <r_col_data_2>8</r_col_data_2>
+   <string_flag>preg</string_flag>
+   <a_col_rut>1</a_col_rut>
+   <fl_a_data>5</fl_a_data>
+   <N>44</N>
+   <pes_rev>Revisión</pes_rev>
+   <pes_abi>Preguntas abiertas</pes_abi>
+</data>
