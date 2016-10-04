@@ -126,6 +126,7 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 try
     
     string_length_console = 90;                                            % LARGO DE STRING EN CONSOLA
+    COMP = computer;
     
     %% EXTRACCION DE ARCHIVOS DE ENTRADA DE USUARIO
     r_file          = handles.pushbutton2.UserData.files;                   % ARCHIVO DE PLANTILLA DE REIVISION
@@ -149,11 +150,28 @@ try
     fl_a_data       = str2double(parametros.data.fl_a_data.Text);           % FILA EN QUE EMPIEZAN LAS RESPUESTAS EN ARCHIVOS DE RESPUESTAS
     info_fil        = 1;                                                    % FILA CON INFO DE ARCHIVOS RESPUESTAS
     ll_data         = N+fl_data-1;                                          % FILA EN QUE TERMINAR LA DATA DE PLANTILLA
-    [~,Sheets,~]    = xlsfinfo([r_path r_file]);                            % SHEETS: CELL ARRAY CON NOMBRE PESTAÑA EN PLANTILLA (CAMBIAR POR ENTRADA USUARIO)
-
-	%% COMPROBAR QUE PESTAÑAS DE REVISION Y PREGUNTAS ABIERTAS EXISTAN EN ARCHIVO DE REVISION
+    
+    switch COMP
+        case 'MACI64'
+        % CASE MAC
+            SheetsStruct    = importdata([r_path r_file]);
+            Sheets          = fieldnames(SheetsStruct.textdata);
+        case 'PCWIN64'
+        % CASE WINDOWS
+            [~,Sheets,~]    = xlsfinfo([r_path r_file]);                            % SHEETS: CELL ARRAY CON NOMBRE PESTAÑA EN PLANTILLA (CAMBIAR POR ENTRADA USUARIO)
+            Sheets          = cellstr(Sheets);            
+        otherwise
+        % CASE OTHERS
+            log_s = 'Sistema Operativo no soportado.';
+            log_s = fillString(log_s,string_length_console);
+            handles.text4.String = [handles.text4.String; log_s];
+            return;            
+    end
+        
+    %% COMPROBAR QUE PESTAÑAS DE REVISION Y PREGUNTAS ABIERTAS EXISTAN EN ARCHIVO DE REVISION
     bp_rev = 0; bp_abi = 0;
     for sh = 1:length(Sheets)
+        %disp([rev_sheet ' -@- ' sheets{sh} ' -@- ' Sheets{sh}])
         bp_rev = strcmp(Sheets{sh},rev_sheet) + bp_rev;
         bp_abi = strcmp(Sheets{sh},abi_sheet) + bp_abi;
     end
@@ -170,8 +188,17 @@ try
     end
     
     %% ABRIR ARCHIVOS DE REVISION
-    [~,~,Rcop]      = xlsread([r_path r_file],rev_sheet);                   % RCOP: CELL ARRAY CON DATOS PLANTILLA REVISION
-    [~,~,Acop]      = xlsread([r_path r_file],abi_sheet);                   % ACOP: CELL ARRAY CON DATOS PLANTILLA PREGUNTAS ABIERTAS
+    switch COMP
+        case 'PCWIN64'
+        [~,~,Rcop]      = xlsread([r_path r_file],rev_sheet);                   % RCOP: CELL ARRAY CON DATOS PLANTILLA REVISION
+        otherwise
+        % CASE OTHERS
+        log_s = 'Sistema Operativo no soportado.';
+        log_s = fillString(log_s,string_length_console);
+        handles.text4.String = [handles.text4.String; log_s];
+        return;     
+    end
+    %[~,~,Acop]      = xlsread([r_path r_file],abi_sheet);                   % ACOP: CELL ARRAY CON DATOS PLANTILLA PREGUNTAS ABIERTAS
     stud_data_cop   = Rcop(fl_data:ll_data,1:r_col_data_1-1);               % INFORMACION DE LOS ALUMNOS, NO DEBE TENER MAS DE 4 COLUMNAS, i.e r_col_data_1 = 5 siempre
     stud_data_date  = stud_data_cop;
     course_data     = Rcop(1:fl_data-1,r_col_data_2:end);                   % INDICE DE LOS TALLERES y ACTIVIDADES DEL CURSO
@@ -240,18 +267,28 @@ try
         clear P OA
         outArr                  = stud_data_cop;                                % VARIABLE DE COPIA DE INFORMACION DE LOS ALUMNOS         
         codigo                  = a_file{z};                                    % NOMBRE CODIGO DE ARCHIVO DE RESPUESTAS ej: "variables TXAY_ZZ.xls"
-        idx                     = regexp(codigo,'t[\0-9]a[\0-9]_[\0-9]');      	% INDICE DE DONDE APARECE TXAY_ZZ.xl...
-        codigo                  = regexprep(codigo(idx:end),'\W\w{1,10}','');   % CODIGO LIMPIO TXAY_ZZ
-        [~,~,R1]                = xlsread([a_path a_file{z}]);                  % CELL ARRAY CON INFO DE ARCHIVO DE RESPUESTAS
+        idx                     = regexp(codigo,'t[\0-9]a[\0-9][_\0-9]');      	% INDICE DE DONDE APARECE TXAY_ZZ.xl...
+        codigo                  = strrep(regexprep(codigo(idx:end),'\W\w{1,10}',''),'_','');  % CODIGO LIMPIO TXAYZZ
+        switch COMP
+            case 'PCWIN64'
+                [~,~,R1]                = xlsread([a_path a_file{z}]);                  % CELL ARRAY CON INFO DE ARCHIVO DE RESPUESTAS
+            otherwise
+                 % CASE OTHERS
+                log_s = 'Sistema Operativo no soportado.';
+                log_s = fillString(log_s,string_length_console);
+                handles.text4.String = [handles.text4.String; log_s];
+                return;  
+        end
+        
         info                    = R1(info_fil,:);                               % PRIMERA FILA DE ARCHIVO DE RESPUESTAS. CONTIENE SUS PARAMETROS
         data                    = R1((info_fil+1):end,:);                       % DATA DE ARCHIVO DE RESPUESTSAS
         I                       = length(info);                                 % NUMERO COLUMNAS ARCHIVO DE RESPUESTAS
         [D,~]                   = size(data);                                   % NUMERO DE ENTRADAS DE ARCHIVO DE RESPUESTAS (FILAS)
-        outArr(:,r_col_rut)     = strrep(strrep(strrep(strrep(...               % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
-            outArr(:,r_col_rut),'-',''),'k','0'),'K','0'),'.','');
+        outArr(:,r_col_rut)     = strrep(strrep(strrep(strrep(strrep(...               % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
+            outArr(:,r_col_rut),'-',''),'k','0'),'K','0'),'.',''),' ','');
         outArrAB                = outArr;                                       % COPIA PARA ARREGLO DE RESPUESTAS ABIERTAS
-        stud_data_date(:,r_col_rut)     = strrep(strrep(strrep(strrep(...       % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
-            stud_data_date(:,r_col_rut),'-',''),'k','0'),'K','0'),'.','');
+        stud_data_date(:,r_col_rut)     = strrep(strrep(strrep(strrep(strrep(...       % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
+            stud_data_date(:,r_col_rut),'-',''),'k','0'),'K','0'),'.',''),' ','');
 
         for i = fl_a_data:I                                                     % CONSTRUCCION DE INDICE DE PREGUNTAS PRESENTES EN ARCHIVOS DE RESPUESTAS
             P(i-fl_a_data+1,:)  = str2num(strrep(strrep(info{i},string_flag,''),'_',' '));
@@ -332,9 +369,11 @@ try
 
             end  
         end
-
-        c_codigo = str2double(strsplit(codigo,'[/t/a/_]','DelimiterType','RegularExpression'));
-        c_codigo = c_codigo(end-2:end);
+        codigo_page = codigo(end-1:end);
+        codigo(end-1:end) = [];
+        c_codigo = str2double(strsplit(codigo,'[/t/a]','DelimiterType','RegularExpression'));
+        c_codigo(1) = [];
+        c_codigo(3) = str2double(codigo_page);
 
         [cdL,~] = size(CD);
         CR = ones(cdL,1)*c_codigo;  
@@ -342,7 +381,6 @@ try
         positions_on_rev = find(idxs);
         if length(r_col_data_2-1+positions_on_rev) > length(OA(1,r_col_data_1:end))
             pregs = unique(P(:,1));
-
             OA2 = mat2cell(nan(N,r_col_data_1-1+length(positions_on_rev)),ones(1,N),ones(1,r_col_data_1-1+length(positions_on_rev)));
             OA2(:,1:r_col_data_1-1) = OA(:,1:r_col_data_1-1);
             for h = 1:length(pregs)
@@ -359,11 +397,20 @@ try
         drawnow;
 
     end
-    P2 = [RCToExcelA1(fl_data,r_col_data_2) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL-1)];
-    xlswrite([r_path r_file],Rcop(fl_data:fl_data+N-1,r_col_data_2:r_col_data_2+cdL-1),rev_sheet,P2);
-    P3 = [RCToExcelA1(fl_data,r_col_data_2+cdL) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL)];
-    xlswrite([r_path r_file],stud_data_date(:,r_col_data_1),rev_sheet,P3);
-
+    switch COMP
+        case 'PCWIN64'
+            P2 = [RCToExcelA1(fl_data,r_col_data_2) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL-1)];
+            xlswrite([r_path r_file],Rcop(fl_data:fl_data+N-1,r_col_data_2:r_col_data_2+cdL-1),rev_sheet,P2);
+            P3 = [RCToExcelA1(fl_data,r_col_data_2+cdL) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL)];
+            xlswrite([r_path r_file],stud_data_date(:,r_col_data_1),rev_sheet,P3);
+        otherwise
+            % CASE OTHERS
+            log_s = 'Sistema Operativo no soportado.';
+            log_s = fillString(log_s,string_length_console);
+            handles.text4.String = [handles.text4.String; log_s];
+            return; 
+    end
+    
     log_s = fillString('Finalizado Correctamente',string_length_console);
     handles.text4.String = [handles.text4.String; log_s];
     jScrollPane = findjobj(handles.text4);

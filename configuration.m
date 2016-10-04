@@ -63,7 +63,7 @@ warning on;
 % Update handles structure
 guidata(hObject, handles);
 
-parametros  = xml2struct('datos.xml');
+parametros  = xml2struct([pwd filesep 'datos.xml']);
 fl_data     = parametros.data.fl_data.Text;         % FILA EN QUE EMPIEZA LA DATA DE PLANTILLA
 r_col_rut   = parametros.data.r_col_rut.Text;       % INDICE COLUMNA DE RUT EN PLANTILLA
 r_col_data_1  = parametros.data.r_col_data_1.Text;  % INDICE COLUMNA EN QUE TERMINAN LOS DATOS DE PERSONAS EN PLANTILLA
@@ -300,7 +300,7 @@ f.data.fl_a_data = handles.edit3.String;
 f.data.N = handles.edit7.String;
 f.data.pes_rev = handles.edit9.String;
 f.data.pes_abi = handles.edit10.String;
-struct2xml(f,'datos.xml');
+struct2xml(f,[pwd filesep 'datos.xml']);
 delete(handles.figure1)
 
 % --- Executes on button press in pushbutton2.
