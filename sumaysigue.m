@@ -159,13 +159,14 @@ try
     abi_sheet       = parametros.data.pes_abi;                         % PESTAÑA DE PLANTILLA DE PREGUNTAS ABIERTAS
     string_flag     = parametros.data.string_flag;                     % STRING PARA IDENTIFICAR LAS PREGUNTAS  
     
+    %<dlf>
     ruts_ignore     = parametros.data.ruts_ignore;                     % RUTs que serán ignorados %dlf
-    ruts_ignore     = str2double(strsplit(ruts_ignore,{',',';',' '}));
+    ruts_ignore     = str2double(strsplit(ruts_ignore,{',',';',' '})); %dlf
     if isnan(ruts_ignore)
         ruts_ignore=[];
         MSGtoConsole('RUTs a ignorar deben estar separados por espacio, no contener guión ni letras',string_length_console,handles);
     end
-         
+    %</dlf>     
     
     switch COMP
         case 'MACI64'
@@ -398,17 +399,17 @@ try
                     end
                     
                     if ~isnan(val)
-                        copia_data_rev = addResp(copia_data_rev,rut,val,            j - a_fl_data + 1 , r_col_rut , r_col_data_1,   1,handles,string_length_console,ruts_ignore);
+                        copia_data_rev = addResp(copia_data_rev,rut,val,            j - a_fl_data + 1 , r_col_rut , r_col_data_1,   1,handles,string_length_console,ruts_ignore); % dlf
                     end
                     
                     break;
                 end
             end
-            stud_data_date = addResp(stud_data_date,rut,fecha,a_fl_data+1,r_col_rut,0,0,handles,string_length_console,ruts_ignore);
+            stud_data_date = addResp(stud_data_date,rut,fecha,a_fl_data+1,r_col_rut,0,0,handles,string_length_console,ruts_ignore); % dlf
         end
         if ~isempty(jo)
             for i = 1:length(data_o)            
-                copia_data_abi = addResp(copia_data_abi,data_o{i,2},data_o{i,1}, find(data_o{i,3} == jo) , o_col_rut , o_col_data_1,   0,handles,string_length_console,ruts_ignore);
+                copia_data_abi = addResp(copia_data_abi,data_o{i,2},data_o{i,1}, find(data_o{i,3} == jo) , o_col_rut , o_col_data_1,   0,handles,string_length_console,ruts_ignore); % dlf
             end
         end
         data_rev_final = stud_data_rev;
@@ -519,7 +520,7 @@ catch me_err
 end
 
 
-function outArr = addResp(outArr,rut,val, j , col_rut , col_data , log_disp,handles,string_length_console,ruts_ignore)
+function outArr = addResp(outArr,rut,val, j , col_rut , col_data , log_disp,handles,string_length_console,ruts_ignore) % dlf
     if length(str2num(str2mat(outArr(:,col_rut)))) > 1 %#ok<*DSTRMT>
         rut_list = str2num(str2mat(outArr(:,col_rut)));
         rut_list(isnan(rut_list)) = -1;
@@ -535,10 +536,10 @@ function outArr = addResp(outArr,rut,val, j , col_rut , col_data , log_disp,hand
         lV = 1;
     end
     if isempty(lV) 
-        rut_check = ruts_ignore - rut;
-        lVi = find(~rut_check);
-        %if log_disp && rut ~= 235772043 && rut ~= 300001017 && rut ~= 70179555 
-        if log_disp && isempty(lVi)
+        rut_check = ruts_ignore - rut; % dlf
+        lVi = find(~rut_check); % dlf
+        %if log_disp && rut ~= 235772043 && rut ~= 300001017 && rut ~= 70179555 % dlf 
+        if log_disp && isempty(lVi) % dlf
             log_s = ['    RUT NO ENCONTRADO : ' num2str(rut)];
             log_s = fillString(log_s,string_length_console);
             handles.text4.String = [handles.text4.String; log_s]; 
