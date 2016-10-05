@@ -1,2 +1,0 @@
-# sumaysigue
-Suma y sigue
