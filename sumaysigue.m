@@ -22,7 +22,7 @@ function varargout = sumaysigue(varargin)
 
 % Edit the above text to modify the response to help sumaysigue
 
-% Last Modified by GUIDE v2.5 08-Sep-2016 20:42:24
+% Last Modified by GUIDE v2.5 30-Sep-2016 00:37:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -45,7 +45,7 @@ end
 
 % --- Executes just before sumaysigue is made visible.
 function sumaysigue_OpeningFcn(hObject, eventdata, handles, varargin)
-warning off;
+warning off; %#ok<*WNOFF>
 % Choose default command line output for sumaysigue
 handles.output = hObject;
 
@@ -53,9 +53,9 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 % Icono Suma y Sigue en la ventana
-javaFrame = get(hObject,'JavaFrame');
-javaFrame.setFigureIcon(javax.swing.ImageIcon('icon.jpg'));
-warning on;
+% javaFrame = get(hObject,'JavaFrame');
+% javaFrame.setFigureIcon(javax.swing.ImageIcon('icon.jpg'));
+warning on; %#ok<*WNON>
 
 % This sets up the initial plot - only do when we are invisible
 % so window can get raised using sumaysigue.
@@ -64,12 +64,11 @@ warning on;
 % UIWAIT makes sumaysigue wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
-
 % --- Outputs from this function are returned to the command line.
-function varargout = sumaysigue_OutputFcn(hObject, eventdata, handles)
+function varargout = sumaysigue_OutputFcn(hObject, eventdata, handles) %#ok<*INUSL>
 varargout{1} = handles.output;
 
-function CloseMenuItem_Callback(hObject, eventdata, handles)
+function CloseMenuItem_Callback(hObject, eventdata, handles) %#ok<*DEFNU>
 selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
                      ['Close ' get(handles.figure1,'Name') '...'],...
                      'Yes','No','Yes');
@@ -78,12 +77,12 @@ if strcmp(selection,'No')
 end
 delete(handles.figure1)
 
-function Ayuda_Callback(hObject, eventdata, handles)
+function Ayuda_Callback(hObject, eventdata, handles) %#ok<*INUSD>
 
 function Acerca_Callback(hObject, eventdata, handles)
 
 function pushbutton2_Callback(hObject, eventdata, handles)
-[filename ,pathname, filterIndex] = uigetfile({'*.xls;*.xlsx;','Archivos Excel'}, 'Seleccione el archivo de plantilla');
+[filename ,pathname, ~] = uigetfile({'*.xls;*.xlsx;','Archivos Excel'}, 'Seleccione el archivo de plantilla');
 if filename == 0
     hObject.String = 'seleccionar archivo...';    
 else
@@ -100,8 +99,8 @@ function Configuracion_Callback(hObject, eventdata, handles)
 configuration;
 
 function pushbutton4_Callback(hObject, eventdata, handles)
-[filename ,pathname, filterIndex] = uigetfile({'*.xls;*.xlsx;','Archivos Excel'}, 'Seleccione el o los archivos con las respuestas', 'MultiSelect', 'on');
-if ~iscell(filename) & filename == 0
+[filename ,pathname, ~] = uigetfile({'*.xls;*.xlsx;','Archivos Excel'}, 'Seleccione el o los archivos con las respuestas', 'MultiSelect', 'on');
+if ~iscell(filename) & filename == 0 %#ok<AND2>
     hObject.String = 'seleccionar archivo(s)...';    
 else
     if iscell(filename)
@@ -125,7 +124,8 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 
 try
     
-    string_length_console = 90;                                            % LARGO DE STRING EN CONSOLA
+    string_length_console = 97;                                            % LARGO DE STRING EN CONSOLA
+    COMP = computer;
     
     %% EXTRACCION DE ARCHIVOS DE ENTRADA DE USUARIO
     r_file          = handles.pushbutton2.UserData.files;                   % ARCHIVO DE PLANTILLA DE REIVISION
@@ -133,97 +133,198 @@ try
     a_file          = cellstr(handles.pushbutton4.UserData.files);          % ARCHIVO(S) DE RESPUESTAS
     a_path          = handles.pushbutton4.UserData.path;                    % RUTA DE ARCHIVO(S) DE RESPUESTAS
     
-    %% EXTRACCION DE PARAMETROS DE CONFIGURACION
-    parametros      = xml2struct('datos.xml');                              % ARCHIVO DE DATOS DE CONFIGURACION
-    fl_data         = str2double(parametros.data.fl_data.Text);             % FILA EN QUE EMPIEZA LA DATA DE PLANTILLA
-    r_col_rut       = str2double(parametros.data.r_col_rut.Text);           % INDICE COLUMNA DE RUT EN PLANTILLA
-    r_col_data_1    = str2double(parametros.data.r_col_data_1.Text);        % INDICE COLUMNA EN QUE TERMINAN LOS DATOS DE PERSONAS EN PLANTILLA
-    r_col_data_2    = str2double(parametros.data.r_col_data_2.Text);        % INDICE COLUMNA EN QUE EMPIEZAN LAS RESPUESTAS EN PLANTILLA
-    N               = str2double(parametros.data.N.Text);                   % NUMERO DE ALUMNOS
-    rev_sheet       = parametros.data.pes_rev.Text;                         % PESTAÑA DE PLANTILLA DE REVISION
-    abi_sheet       = parametros.data.pes_abi.Text;                         % PESTAÑA DE PLANTILLA DE PREGUNTAS ABIERTAS
-    string_flag     = parametros.data.string_flag.Text;                     % STRING PARA IDENTIFICAR LAS PREGUNTAS
-    %a_col_nombre    = 2;                                                    % INDICE COLUMNA DE NOMBRE EN ARCHIVOS RESPUESTAS 
-    a_col_fecha     = 3;                                                    % INDICE COLUMNA DE FECHA EN ARCHIVOS RESPUESTAS
-    a_col_rut       = str2double(parametros.data.a_col_rut.Text);           % INDICE COLUMNA DE RUT EN ARCHIVOS RESPUESTAS
-    fl_a_data       = str2double(parametros.data.fl_a_data.Text);           % FILA EN QUE EMPIEZAN LAS RESPUESTAS EN ARCHIVOS DE RESPUESTAS
-    info_fil        = 1;                                                    % FILA CON INFO DE ARCHIVOS RESPUESTAS
-    ll_data         = N+fl_data-1;                                          % FILA EN QUE TERMINAR LA DATA DE PLANTILLA
-    [~,Sheets,~]    = xlsfinfo([r_path r_file]);                            % SHEETS: CELL ARRAY CON NOMBRE PESTAÑA EN PLANTILLA (CAMBIAR POR ENTRADA USUARIO)
-
-	%% COMPROBAR QUE PESTAÑAS DE REVISION Y PREGUNTAS ABIERTAS EXISTAN EN ARCHIVO DE REVISION
+    %% EXTRACCION DE PARAMETROS DE CONFIGURACION       
+    parametros      = load([pwd filesep 'resources' filesep 'datos.mat']);                      % ARCHIVO DE DATOS DE CONFIGURACION
+    parametros      = parametros.f;
+    N               = str2double(parametros.data.N);                   % NUMERO DE ALUMNOS
+    
+    r_fl_data       = str2double(parametros.data.r_fl_data);           % FILA EN QUE EMPIEZA LA DATA DE PLANTILLA
+    r_ll_data       = N + r_fl_data - 1;                               % FILA EN QUE TERMINAR LA DATA DE PLANTILLA
+    r_col_rut       = str2double(parametros.data.r_col_rut);           % INDICE COLUMNA DE RUT EN PLANTILLA
+    r_col_data_1    = str2double(parametros.data.r_col_data_1);        % INDICE COLUMNA EN QUE TERMINAN LOS DATOS DE PERSONAS EN PLANTILLA
+    r_col_data_2    = str2double(parametros.data.r_col_data_2);        % INDICE COLUMNA EN QUE EMPIEZAN LAS RESPUESTAS EN PLANTILLA
+        
+	o_fl_data       = str2double(parametros.data.o_fl_data);           % FILA EN QUE EMPIEZA LA DATA DE PLANTILLA DE PREGUNTAS ABIERTAS
+    o_ll_data       = N + o_fl_data - 1;                               % FILA EN QUE TERMINAR LA DATA DE PLANTILLA DE PREGUNTAS ABIERTAS
+    o_col_rut       = str2double(parametros.data.o_col_rut);           % INDICE COLUMNA DE RUT EN PLANTILLA DE PREGUNTAS ABIERTAS
+    o_col_data_1    = str2double(parametros.data.o_col_data_1);        % INDICE COLUMNA EN QUE TERMINAN LOS DATOS DE PERSONAS EN PLANTILLA DE PREGUNTAS ABIERTAS
+    o_col_data_2    = str2double(parametros.data.o_col_data_2);        % INDICE COLUMNA EN QUE EMPIEZAN LAS RESPUESTAS EN PLANTILLA DE PREGUNTAS ABIERTAS
+    
+    a_col_fecha     = 3;                                               % (Archivos Columna Fecha) INDICE COLUMNA DE FECHA EN ARCHIVOS RESPUESTAS
+    a_col_rut       = str2double(parametros.data.a_col_rut);           % (Archivos Columna RUT) INDICE COLUMNA DE RUT EN ARCHIVOS RESPUESTAS
+    a_fl_data       = str2double(parametros.data.a_fl_data);           % (Archivos First Line (column) DATA) COLUMNA EN QUE EMPIEZAN LAS RESPUESTAS EN ARCHIVOS DE RESPUESTAS
+    info_fil        = 1;                                               % (Fila con parametros del archivo) FILA CON INFO DE ARCHIVOS RESPUESTAS
+    
+    rev_sheet       = parametros.data.pes_rev;                         % PESTAÑA DE PLANTILLA DE REVISION
+    abi_sheet       = parametros.data.pes_abi;                         % PESTAÑA DE PLANTILLA DE PREGUNTAS ABIERTAS
+    string_flag     = parametros.data.string_flag;                     % STRING PARA IDENTIFICAR LAS PREGUNTAS  
+    
+    switch COMP
+        case 'MACI64'
+        % CASE MAC
+            SheetsStruct    = importdata([r_path r_file]);
+            Sheets          = fieldnames(SheetsStruct.textdata);
+        case {'PCWIN64','PCWIN'}
+        % CASE WINDOWS
+            [~,Sheets,~]    = xlsfinfo([r_path r_file]);                            % SHEETS: CELL ARRAY CON NOMBRE PESTAÑA EN PLANTILLA (CAMBIAR POR ENTRADA USUARIO)
+            Sheets          = cellstr(Sheets);            
+        otherwise
+        % CASE OTHERS
+            MSGtoConsole('Sistema Operativo no soportado.',string_length_console,handles);
+            return;            
+    end
+    % Sheets: Nombres de las pestañas
+    
+    %% COMPROBAR QUE PESTAÑAS DE REVISION Y PREGUNTAS ABIERTAS EXISTAN EN ARCHIVO DE REVISION
     bp_rev = 0; bp_abi = 0;
     for sh = 1:length(Sheets)
         bp_rev = strcmp(Sheets{sh},rev_sheet) + bp_rev;
         bp_abi = strcmp(Sheets{sh},abi_sheet) + bp_abi;
     end
     if ~bp_rev
-        log_s = ['Revise el nombre de la pestaña de revisión. La pestaña ''' rev_sheet ''' no se encuentra en ''' r_file ''''];
-        log_s = fillString(log_s,string_length_console);
-        handles.text4.String = [handles.text4.String; log_s];
+        MSGtoConsole(['Revise el nombre de la pestaña de revisión. La pestaña ''' rev_sheet ''' no se encuentra en ''' r_file ''''],string_length_console,handles);
         return;
     elseif ~bp_abi
-        log_s = ['Revise el nombre de la pestaña de preguntas abiertas. La pestaña ''' abi_sheet ''' no se encuentra en ''' r_file ''''];
-        log_s = fillString(log_s,string_length_console);
-        handles.text4.String = [handles.text4.String; log_s];
+        MSGtoConsole(['Revise el nombre de la pestaña de preguntas abiertas. La pestaña ''' abi_sheet ''' no se encuentra en ''' r_file ''''],string_length_console,handles);
         return;
     end
     
     %% ABRIR ARCHIVOS DE REVISION
-    [~,~,Rcop]      = xlsread([r_path r_file],rev_sheet);                   % RCOP: CELL ARRAY CON DATOS PLANTILLA REVISION
-    [~,~,Acop]      = xlsread([r_path r_file],abi_sheet);                   % ACOP: CELL ARRAY CON DATOS PLANTILLA PREGUNTAS ABIERTAS
-    stud_data_cop   = Rcop(fl_data:ll_data,1:r_col_data_1-1);               % INFORMACION DE LOS ALUMNOS, NO DEBE TENER MAS DE 4 COLUMNAS, i.e r_col_data_1 = 5 siempre
-    stud_data_date  = stud_data_cop;
-    course_data     = Rcop(1:fl_data-1,r_col_data_2:end);                   % INDICE DE LOS TALLERES y ACTIVIDADES DEL CURSO
-    [~, cdL]        = size(course_data);                                    % NUMERO DE TALLERES Y ACTIVIDADES    
-
-    %% ARREGLO DE INDICE DE TALLERES Y ACTIVIDADES     
+    switch COMP
+        case {'PCWIN64','PCWIN'}
+        % CASE PCWIN64
+            [~,~,R]      = xlsread([r_path r_file],rev_sheet);                   % R: CELL ARRAY CON DATOS PLANTILLA REVISION
+            [~,~,O]      = xlsread([r_path r_file],abi_sheet);                   % A: CELL ARRAY CON DATOS PLANTILLA PREGUNTAS ABIERTAS
+        otherwise
+        % CASE OTHERS
+            MSGtoConsole('Sistema Operativo no soportado.',string_length_console,handles);
+            return;
+    end
+    % R y O: Cell array con toda la info de revision y preguntas abiertas respectivamente
+    
+    stud_data_rev       = R( r_fl_data:r_ll_data , 1:r_col_data_1 - 1 );        % INFORMACION DE LOS ALUMNOS, NO DEBE TENER MAS DE 4 COLUMNAS, i.e r_col_data_1 = 5 siempre    
+    course_data_rev     = R( 1:r_fl_data-1 , r_col_data_2:end );                % INDICE DE LOS TALLERES y ACTIVIDADES DEL CURSO
+    stud_data_abi       = O( o_fl_data:o_ll_data , 1:o_col_data_1 - 1 );        % INFORMACION (PREGUNTAS ABIERTAS) DE LOS ALUMNOS, NO DEBE TENER MAS DE 4 COLUMNAS, i.e r_col_data_1 = 5 siempre 
+    course_data_abi     = O( 1:o_fl_data-2 , o_col_data_2:end );                % INDICE DE LOS TALLERES y ACTIVIDADES DEL CURSO (PREGUNTAS ABIERTAS)
+    
+    [~, cdL]            = size(course_data_rev);                                % NUMERO DE TALLERES Y ACTIVIDADES    
+    [~, cdLo]           = size(course_data_abi);                                % NUMERO DE TALLERES Y ACTIVIDADES    
+    
+    for i = 1:N
+        stud_data_rev{i,r_col_rut} = num2str(stud_data_rev{i,r_col_rut});
+        stud_data_abi{i,r_col_rut} = num2str(stud_data_abi{i,r_col_rut});
+    end
+    stud_data_rev(:,r_col_rut) = multiStrrep(stud_data_rev(:,r_col_rut),{'-','K','k','.',' '},{'','0','0','',''});   % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
+    rut_list_rev = str2num(str2mat(stud_data_rev(:,r_col_rut)));
+    if isempty(rut_list_rev)
+        MSGtoConsole('REVISE LA LISTA DE RUTS DE LA PLANILLA DE REVISION (SOLO 0-9, "-", "k", "K", ".", " ")',string_length_console,handles);
+        return;
+    end  
+    stud_data_abi(:,r_col_rut) = multiStrrep(stud_data_abi(:,r_col_rut),{'-','K','k','.',' '},{'','0','0','',''});   % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)                                                                     % COPIA PARA ARREGLO DE RESPUESTAS ABIERTAS
+    rut_list_abi = str2num(str2mat(stud_data_abi(:,o_col_rut)));
+    if isempty(rut_list_abi)
+        MSGtoConsole('REVISE LA LISTA DE RUTS DE LA PLANILLA DE PREGUNTAS ABIERTAS (SOLO 0-9, "-", "k", "K", ".", " ")',string_length_console,handles);
+        return;
+    end
+    stud_data_date      = stud_data_rev;
+    % stud_data_rev
+    % course_data_rev
+    % stud_data_date
+    
+    %% ARREGLO DE INDICE DE TALLERES Y ACTIVIDADES
+    fin_check = [1 1];
     for n = 1:cdL
-        if isnan(course_data{1,n}), course_data{1,n} = course_data{1,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE TALLERES
-        if isnan(course_data{2,n}), course_data{2,n} = course_data{2,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE ACTIVIDADES
+        if strcmp(course_data_rev{1,n},'fin') || strcmp(course_data_rev{2,n},'fin') || strcmp(course_data_rev{3,n},'fin') || strcmp(course_data_rev{4,n},'fin')
+            cdL = n-1;
+            fin_check(1) = 0;
+            break;
+        end
+    end
+    for n = 1:cdLo
+        if strcmp(course_data_abi{1,n},'fin') || strcmp(course_data_abi{2,n},'fin') || strcmp(course_data_abi{3,n},'fin') || strcmp(course_data_abi{4,n},'fin')
+            cdLo = n-1;
+            fin_check(2) = 0;
+            break;
+        end
+    end
+    if fin_check(1)
+        MSGtoConsole('Revise que tenga la palabra ''fin'' después de la última pregunta en la planilla de revisión.',string_length_console,handles);return;
+    elseif fin_check(2)
+        MSGtoConsole('Revise que tenga la palabra ''fin'' después de la última pregunta en la planilla de preguntas abiertas.',string_length_console,handles);return;
+    end
+    course_data_rev = course_data_rev(:,1:cdL);
+    course_data_abi = course_data_abi(:,1:cdLo);
+    
+    for n = 1:cdL    
+        if ischar(course_data_rev{3,n})
+            if isempty(str2num(course_data_rev{3,n}))
+                MSGtoConsole('Revise los campos de numeración de ''Página'' en la planilla de revisión (0-9).',string_length_console,handles);return;
+            else
+                course_data_rev{3,n} = str2num(course_data_rev{3,n});
+            end
+        end
+        if isnan(course_data_rev{1,n}), course_data_rev{1,n} = course_data_rev{1,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE TALLERES
+        if isnan(course_data_rev{2,n}), course_data_rev{2,n} = course_data_rev{2,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE ACTIVIDADES
+        if isnan(course_data_rev{3,n}), course_data_rev{3,n} = course_data_rev{3,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE PAGINAS
+    end
+    for n = 1:cdLo
+        if ischar(course_data_abi{3,n})
+            if isempty(str2num(course_data_abi{3,n}))
+                MSGtoConsole('Revise los campos de numeración de ''Página'' en la planilla de preguntas abiertas (0-9).',string_length_console,handles);return;
+            else
+                course_data_abi{3,n} = str2num(course_data_abi{3,n});
+            end
+        end
+        if ischar(course_data_abi{4,n})
+            if isempty(str2num(course_data_abi{4,n}))
+                MSGtoConsole('Revise los campos de numeración de ''Pregunta'' en la planilla de preguntas abiertas (0-9).',string_length_console,handles);return;
+            else
+                course_data_abi{4,n} = str2num(course_data_abi{4,n});
+            end
+        end
+        if isnan(course_data_abi{1,n}), course_data_abi{1,n} = course_data_abi{1,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE TALLERES
+        if isnan(course_data_abi{2,n}), course_data_abi{2,n} = course_data_abi{2,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE ACTIVIDADES
+        if isnan(course_data_abi{3,n}), course_data_abi{3,n} = course_data_abi{3,n-1}; end  % RELLENO DE CAMPOS VACIOS EN INDICE DE ACTIVIDADES
     end
     
     %% CONVERSION DE INDICE DE TALLERES Y ACTIVIDADES A INDICE NUMERICO
-	aux_m_0  = course_data{1,1};                                            % VAR AUX PARA TALLER            
-    aux_m_1  = course_data{2,1};                                            % VAR AUX PARA ACTIVIDAD
-    cont_0   = 1;                                                           % CONTADOR TALLER
-    cont_1   = 1;                                                           % CONTADOR ACTIVIDAD   
+    aux_m = course_data_rev(1:2,1)'; 
+    cont  = [1 1]; 
     for n = 1:cdL
-        aux_0 = course_data{1,n};                                           % TALLER
-        aux_1 = course_data{2,n};                                           % ACTIVIDAD
-        aux_2 = course_data{3,n};                                           % PAGINA
-        aux_3 = course_data{4,n};                                           % PREGUNTA
-        aux_4 = 0;                                                          % ABIERTA O NO ABIERTA
-        
-        if ~strcmp(aux_0,aux_m_0)                                           % COMPRUEBA CAMBIO EN TALLER Y ACTIVIDAD
-            cont_0 = cont_0 + 1; cont_1 = 1;
-        else   
-            if ~strcmp(aux_1,aux_m_1), cont_1 = cont_1 + 1; end
-        end
-        
-        if (isnan(aux_2) & isnan(aux_3)) | (ischar(aux_2) & ischar(aux_3)) | length(aux_2)>9 | length(aux_3)>9  %#ok<OR2,AND2> % COMPRUEBA FIN DE INDICES
-            break;
-        end     
-
-        if isnan(aux_2),aux_2 = CD(n-1,3);end                               % REPARANDO LAS ACTIVIDADES CON MAS DE UNA PREGUNTA (NaN POR ACT. ANTERIOR)
-
-        if strcmp(aux_3,'-')                                                % VERIFICANDO TIPO DE PREGUNTA ABIERTA O NO ABIERTA
-            aux_3 = 0;
+        aux = [course_data_rev(1:4,n); 0]';
+        if ~strcmp(aux{1},aux_m{1})                                          
+            cont(1) = cont(1) + 1; cont(2) = 1;
         else
-            if ischar(aux_3)
-                aux_33 = aux_3;
-                saux = strsplit(aux_3,'(A)');
-                if length(saux) > 1, aux_4 = 1; end
-                aux_3 = str2double(saux{1});
-                aux_33 = regexprep(aux_33,'[^\0-9]','');        
-                if isnan(aux_3), aux_3 = str2double(aux_33); end
+            if ~strcmp(aux{2},aux_m{2}), cont(2) = cont(2) + 1; end
+        end
+        if strcmp(aux{4},'-'), aux{4} = -1;                                               % VERIFICANDO TIPO DE PREGUNTA ABIERTA O NO ABIERTA
+        else
+            if ischar(aux{4})                                               % CASO PREGUNTA ABIERTA O TIPO TEXTO ('4a', '3b', etc)
+                aux_copy = aux{4};
+                saux = strsplit(aux{4},'(A)');
+                if length(saux) > 1, aux{5} = 1; end                        % CASO PREGUNTA ABIERTA
+                aux{4} = str2double(saux{1});
+                aux_copy = regexprep(regexprep(aux_copy,'[^\0-9]',''),'[\( \)]','');        
+                if isnan(aux{4}) | (real(aux{4}) ~= aux{4}), aux{4} = str2double(aux_copy); end %#ok<OR2>
             end
         end
-        CD(n,:) = [cont_0 cont_1 aux_2 aux_3 aux_4];                        % TALLER | ACTIVIDAD | PAGINA | PREGUNTA | ABIERTA/NOABIERTA
-        aux_m_0 = aux_0;
-        aux_m_1 = aux_1;
+        CD(n,:) = [cont aux{3:5}];                                          % INDICE DE ACTIVIDADES [TALLER | ACTIVIDAD | PAGINA | PREGUNTA | ABIERTA/NOABIERTA]
+        aux_m = aux(1:2);
     end
-
+    % CD: INDICE NUMERICO DE LA PLANILLA DE REVISION
+    aux_m = course_data_abi(1:2,1)'; 
+    cont  = [1 1];
+    for n = 1:cdLo
+        aux = course_data_abi(1:4,n)';
+        if ~strcmp(aux{1},aux_m{1})                                          
+            cont(1) = cont(1) + 1; cont(2) = 1;
+        else
+            if ~strcmp(aux{2},aux_m{2}), cont(2) = cont(2) + 1; end
+        end
+        CDO(n,:) = [cont aux{3:4}];                                          % #ok<NASGU> INDICE DE ACTIVIDADES [TALLER | ACTIVIDAD | PAGINA | PREGUNTA | ABIERTA/NOABIERTA]
+        aux_m = aux(1:2);
+    end
+    clearvars cont aux aux_m saux aux_copy n sh bp_rev bp_abi fin_check i
     % RESTRICCIONES
     % TALLER: SOLO SE ADMITE TEXTO PARA LAS CASILLAS, ALFANUMERICO
     % ACTIVIDAD: SOLO SE ADMITE TEXTO PARA LAS CASILLAS ALFANUMERICO
@@ -232,143 +333,169 @@ try
 
     %% REVISANDO TODOS LOS ARCHIVOS DE RESPUESTAS SELECCIONADOS
     for z = 1:length(a_file)
-                
-        log_s = ['Revisando el archivo ' a_file{z} ' ...'];
-        log_s = fillString(log_s,string_length_console);
-        handles.text4.String = [handles.text4.String; log_s];
         
+        MSGtoConsole(['Revisando el archivo ' a_file{z} ' ...'],string_length_console,handles);  
         clear P OA
-        outArr                  = stud_data_cop;                                % VARIABLE DE COPIA DE INFORMACION DE LOS ALUMNOS         
+        copia_data_rev          = stud_data_rev;                                % VARIABLE DE COPIA DE INFORMACION DE LOS ALUMNOS  
+        copia_data_abi          = stud_data_abi;                                % VARIABLE DE COPIA DE INFORMACION DE LOS ALUMNOS (Preguntas Abiertas) 
         codigo                  = a_file{z};                                    % NOMBRE CODIGO DE ARCHIVO DE RESPUESTAS ej: "variables TXAY_ZZ.xls"
-        idx                     = regexp(codigo,'t[\0-9]a[\0-9]_[\0-9]');      	% INDICE DE DONDE APARECE TXAY_ZZ.xl...
-        codigo                  = regexprep(codigo(idx:end),'\W\w{1,10}','');   % CODIGO LIMPIO TXAY_ZZ
-        [~,~,R1]                = xlsread([a_path a_file{z}]);                  % CELL ARRAY CON INFO DE ARCHIVO DE RESPUESTAS
-        info                    = R1(info_fil,:);                               % PRIMERA FILA DE ARCHIVO DE RESPUESTAS. CONTIENE SUS PARAMETROS
-        data                    = R1((info_fil+1):end,:);                       % DATA DE ARCHIVO DE RESPUESTSAS
-        I                       = length(info);                                 % NUMERO COLUMNAS ARCHIVO DE RESPUESTAS
-        [D,~]                   = size(data);                                   % NUMERO DE ENTRADAS DE ARCHIVO DE RESPUESTAS (FILAS)
-        outArr(:,r_col_rut)     = strrep(strrep(strrep(strrep(...               % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
-            outArr(:,r_col_rut),'-',''),'k','0'),'K','0'),'.','');
-        outArrAB                = outArr;                                       % COPIA PARA ARREGLO DE RESPUESTAS ABIERTAS
-        stud_data_date(:,r_col_rut)     = strrep(strrep(strrep(strrep(...       % REPARACION DE CASILLA DE RUT (-K,-k -> -0 y borrar .)
-            stud_data_date(:,r_col_rut),'-',''),'k','0'),'K','0'),'.','');
-
-        for i = fl_a_data:I                                                     % CONSTRUCCION DE INDICE DE PREGUNTAS PRESENTES EN ARCHIVOS DE RESPUESTAS
-            P(i-fl_a_data+1,:)  = str2num(strrep(strrep(info{i},string_flag,''),'_',' '));
+        idx                     = regexp(codigo,'t[\0-9]a[\0-9][_\0-9]');      	% INDICE DE DONDE APARECE TXAY_ZZ.xl...
+        codigo                  = strrep(regexprep(codigo(idx:end),'\W\w{1,10}',''),'_','');  % CODIGO LIMPIO TXAYZZ
+        switch COMP
+            case {'PCWIN64','PCWIN'}
+                [~,~,A]         = xlsread([a_path a_file{z}]);                  % CELL ARRAY CON INFO DE ARCHIVO DE RESPUESTAS
+            otherwise
+                % CASE OTHERS
+                MSGtoConsole('Sistema Operativo no soportado.',string_length_console,handles);
+                return;
+        end        
+        info                        = A(info_fil,a_fl_data:end);                                                           % PRIMERA FILA DE ARCHIVO DE RESPUESTAS. CONTIENE SUS PARAMETROS
+        data                        = A((info_fil+1):end,:);                                                               % DATA DE ARCHIVO DE RESPUESTSAS
+        I                           = length(info);                                                                        % NUMERO COLUMNAS ARCHIVO DE RESPUESTAS
+        [D,~]                       = size(data);                                                                          % NUMERO DE ENTRADAS DE ARCHIVO DE RESPUESTAS (FILAS)
+        for i = 1:I                                                                                                        % CONSTRUCCION DE INDICE DE PREGUNTAS PRESENTES EN ARCHIVOS DE RESPUESTAS
+            if isempty(strfind(info{i},string_flag))
+                MSGtoConsole(['    Columna extraña encontrada en ' a_file{z} ': col: ' num2str(i+a_fl_data-1) ' - "' info{i} '"'],string_length_console,handles);
+                continue;
+            end
+            P(i,:)  	= str2num(multiStrrep(info{i},{string_flag,'_'},{'',' '}));                                        % P CONTIENE LOS HEADERS DEL ARCHIVOS DE RESPUESTAS (HTML) 1º COL (PREG) 2º COL (SUBPREG)
         end
-        [pL,~]                  = size(P);                                      % NUMERO DE PREGUNTAS EN ARCHIVO RESPUESTAS
-
+        [pL,~]          = size(P);                                                                                         % NUMERO DE SUBPREGUNTAS EN ARCHIVO RESPUESTAS 
+        
         %% EXTRACCION Y SINTESIS DE RESPUESTAS DESDE ARCHIVO DE RESPUESTAS (FOR SOBRE ENTRADAS (FILAS) DE ARCHIVO DE RESPUESTAS)
-        for i = 1:D
-            rut     = data{i,a_col_rut};
-            rut     = strrep(rut,'-','');
-            rut     = strrep(rut,'K','0');
-            rut     = strrep(rut,'k','0');
-            rut     = strrep(rut,'.','');
-            rut     = str2num(rut);     %#ok<*ST2NM>
-            %nombre  = data{i,a_col_nombre};
+        jo = [];io = 1;
+        clear data_o
+        for i = 1:D            
+            try
+                rut = str2num(multiStrrep(data{i,a_col_rut},{'-','K','k','.',' '},{'','0','0','',''})); %#ok<*ST2NM>
+            catch
+                MSGtoConsole(['REVISE LOS RUTS DEL ARCHIVO ' a_file{z} ' (SOLO 0-9, "-", "k", "K", ".", " ")'],string_length_console,handles);
+                break;
+            end
             fecha   = data{i,a_col_fecha};
-
-            for j = fl_a_data:(pL+fl_a_data-1)  % FOR SOBRE PREGUNTAS DE ARCHIVO DE RESPUESTAS (COLUMNAS)
+            for j = a_fl_data:(pL + a_fl_data - 1)  % FOR SOBRE PREGUNTAS DE ARCHIVO DE RESPUESTAS (COLUMNAS)
                 resp = data{i,j};
+                
                 if ~isempty(resp)
                     resp = strsplit(resp,'#');
                     ab_resp = resp{3};
                     resp = strsplit(resp{1}, ':');
                     s    = resp{1};
+                    
                     switch s
-                        case 'buena'
-                            val = 1;
-                        case 'mala'
-                            val = 0;
-                        case 'intento'
-                            val = NaN;
-                        case 'enviada'
-                            val = 2;                            
+                        case 'buena'    , val = 1;
+                        case 'mala'     , val = 0;
+                        case 'intento'  , val = NaN;
+                        case 'enviada'  , val = 2; jo = unique([jo j]); data_o{io,1}=ab_resp; data_o{io,2}=rut;data_o{io,3} = j;io=io+1;                        
                     end
+                    
                     if ~isnan(val)
-                        outArr = addResp(outArr,rut,val,j-fl_a_data+1,r_col_rut,r_col_data_1,handles,string_length_console);
-                        if val == 2
-                            outArrAB = addResp(outArrAB,rut,ab_resp,j-fl_a_data+1,r_col_rut,r_col_data_1,handles,string_length_console);
-                        end
+                        copia_data_rev = addResp(copia_data_rev,rut,val,            j - a_fl_data + 1 , r_col_rut , r_col_data_1,   1,handles,string_length_console);
                     end
+                    
                     break;
                 end
             end
-            stud_data_date = addResp(stud_data_date,rut,fecha,fl_a_data+1,r_col_rut,0,handles,string_length_console);
+            stud_data_date = addResp(stud_data_date,rut,fecha,a_fl_data+1,r_col_rut,0,0,handles,string_length_console);
         end
+        if ~isempty(jo)
+            for i = 1:length(data_o)            
+                copia_data_abi = addResp(copia_data_abi,data_o{i,2},data_o{i,1}, find(data_o{i,3} == jo) , o_col_rut , o_col_data_1,   0,handles,string_length_console);
+            end
+        end
+        data_rev_final = stud_data_rev;
         
-        OA(:,1:(fl_a_data-1)) = outArr(:,1:(fl_a_data-1));
-
         %% POST PROCESS
         NP = max(P(:,1));
         for i = 1:NP
             clear OAC
-            C = P(:,1);
-            G = find(~(C-i));
-            try
-                aux = outArr(:,4+(G(1):G(end)));    
-                [faux,caux] = size(aux);
-                Iaux = isequalCellArray(aux,[]);
+            G = find(~(P(:,1)-i));                                      % columnas asociadas a subpreguntas de la misma pregunta (puede ser mas de una)
+            try                                                         % Tratamos de ordenarlas, si es que existen
+                aux = copia_data_rev(:,4+(G(1):G(end)));                % Recuperamos las respuestas
+                [faux,caux] = size(aux);                                    
+                Iaux = isequalCellArray(aux,[]);                       
                 for j = 1:faux
-                    for g = 1:caux
-                        if Iaux(j,g)
-                            aux{j,g} = [NaN];
-                        end
-                    end
+                   for g = 1:caux
+                       if Iaux(j,g)
+                           aux{j,g} = NaN;
+                       end
+                   end
                 end
-                OAC = cell2mat(aux);
-                if length(G)>1
-                    OAC = prod(OAC,2);
+                OAC = cell2mat(aux);                                    % Preparamos el arreglo para poder colapsarlo a una sola columna (en caso de tener mas de una) 
+                if length(G) > 1
+                    OAC = prod(OAC,2);                                  % Colapsamos la columna con prod
                 end
-
-                OA(:,i+4) = mat2cell(OAC,ones(1,length(OAC)),1);
-            catch err
-                log_s = ['    La pregunta ' num2str(i) ' no se respondía! OJO!'];
-                log_s = fillString(log_s,string_length_console);
-                handles.text4.String = [handles.text4.String; log_s];            
-                log_me = fillString(['    ' err.message],string_length_console);
-                handles.text4.String = [handles.text4.String; log_me];
-
+                data_rev_final(:,i+4) = mat2cell(OAC,ones(1,length(OAC)),1); %#ok<MMTC> % Copiamos la columna a la columna correspondiente i
+            catch
+                MSGtoConsole(['    La pregunta ' num2str(i) ' no se respondía o nadie la ha respondido aún!'],string_length_console,handles);
             end  
         end
-
-        c_codigo = str2double(strsplit(codigo,'[/t/a/_]','DelimiterType','RegularExpression'));
-        c_codigo = c_codigo(end-2:end);
-
-        [cdL,~] = size(CD);
-        CR = ones(cdL,1)*c_codigo;  
-        idxs = sum(CD(:,1:3) == CR,2)==3;
-        positions_on_rev = find(idxs);
-        if length(r_col_data_2-1+positions_on_rev) > length(OA(1,r_col_data_1:end))
-            pregs = unique(P(:,1));
-
-            OA2 = mat2cell(nan(N,r_col_data_1-1+length(positions_on_rev)),ones(1,N),ones(1,r_col_data_1-1+length(positions_on_rev)));
-            OA2(:,1:r_col_data_1-1) = OA(:,1:r_col_data_1-1);
-            for h = 1:length(pregs)
-                OA2(:,r_col_data_1-1+h) = OA(:,r_col_data_1-1+pregs(h));
-            end
-            OA = OA2;
-        end
-        Rcop(fl_data:fl_data+N-1,r_col_data_2-1+positions_on_rev) = OA(:,r_col_data_1:end);
         
+        %% ORDENAMIENTO DEL HTML ACTUAL EN EL ARREGLO FINAL
+        codigo_page = codigo(end-1:end);
+        codigo(end-1:end) = [];
+        c_codigo = str2double(strsplit(codigo,'[/t/a]','DelimiterType','RegularExpression'));
+        c_codigo(1) = [];
+        c_codigo(3) = str2double(codigo_page);
+        
+        idxs = sum(CD(:,1:3) == (ones(cdL,1) * c_codigo),2) == 3;
+        idxsO = sum(CDO(:,1:3) == (ones(cdLo,1) * c_codigo),2) == 3;
+        positions_on_abi = find(idxsO);
+        positions_on_rev = find(idxs);
+        
+        if length(data_rev_final(1,r_col_data_1:end)) > 0 %#ok<ISMT>                                  % Revisamos si hay algo que agregar al arreglo final
+            if length(positions_on_rev) > length(data_rev_final(1,r_col_data_1:end))                  % DEJANDO COLUMNA EN BLANCO PARA PREGUNTA QUE NO APARECIO EN HTML
+                pregs = unique(P(:,1));
+                OA2 = mat2cell(nan(N,r_col_data_1-1+length(positions_on_rev)),ones(1,N),ones(1,r_col_data_1-1+length(positions_on_rev)));       %#ok<MMTC>
+                OA2(:,1:r_col_data_1-1) = data_rev_final(:,1:r_col_data_1-1);
+                for h = 1:length(pregs)
+                    OA2(:,r_col_data_1-1+h) = data_rev_final(:,r_col_data_1-1+pregs(h));
+                end
+                data_rev_final = OA2;
+            end
+            try
+                R(r_fl_data:r_fl_data+N-1,r_col_data_2-1+positions_on_rev) = data_rev_final(:,r_col_data_1:end);
+            catch
+                MSGtoConsole(['Ocurrio un error - Podría ser que tenga mal indexado el archivo ' a_file{z} ' en la planilla'],string_length_console,handles);
+            end
+        end
+        if ~isempty(copia_data_abi(1,o_col_data_1:end))
+            if length(positions_on_abi) > length(copia_data_abi(1,o_col_data_1:end))                  % DEJANDO COLUMNA EN BLANCO PARA PREGUNTA QUE NO APARECIO EN HTML
+                OA3 = mat2cell(nan(N,o_col_data_1-1+length(positions_on_abi)),ones(1,N),ones(1,o_col_data_1-1+length(positions_on_abi)));       %#ok<MMTC>
+                OA3(:,1:o_col_data_1-1) = copia_data_abi(:,1:o_col_data_1-1);
+                for h = 1:length(jo)
+                    OA3(:,o_col_data_1-1+h) = copia_data_abi(:,o_col_data_1-1+jo(h));
+                end
+                copia_data_abi = OA3;
+            end 
+            try
+                O(o_fl_data:o_fl_data+N-1,o_col_data_2-1+positions_on_abi) = copia_data_abi(:,o_col_data_1:end);
+            catch
+                MSGtoConsole(['Ocurrio un error - Podría ser que tenga mal indexado el archivo ' a_file{z} ' en la planilla'],string_length_console,handles);
+            end
+        end
         %% SCROLL BAR DE PANEL NEGRO SIEMPRE ABAJO
-        jScrollPane = findjobj(handles.text4);
-        jVSB = jScrollPane.getVerticalScrollBar;
-        jVSB.setValue(jVSB.getMaximum);
+        jScrollPane = findjobj(handles.text4);jVSB = jScrollPane.getVerticalScrollBar;jVSB.setValue(jVSB.getMaximum);
         drawnow;
 
     end
-    P2 = [RCToExcelA1(fl_data,r_col_data_2) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL-1)];
-    xlswrite([r_path r_file],Rcop(fl_data:fl_data+N-1,r_col_data_2:r_col_data_2+cdL-1),rev_sheet,P2);
-    P3 = [RCToExcelA1(fl_data,r_col_data_2+cdL) ':' RCToExcelA1(fl_data+N-1,r_col_data_2+cdL)];
-    xlswrite([r_path r_file],stud_data_date(:,r_col_data_1),rev_sheet,P3);
-
-    log_s = fillString('Finalizado Correctamente',string_length_console);
-    handles.text4.String = [handles.text4.String; log_s];
-    jScrollPane = findjobj(handles.text4);
-    jVSB = jScrollPane.getVerticalScrollBar;
-    jVSB.setValue(jVSB.getMaximum);
+    switch COMP
+        case {'PCWIN64','PCWIN'}
+            P2 = [RCToExcelA1(r_fl_data,r_col_data_2) ':' RCToExcelA1(r_fl_data+N-1,r_col_data_2+cdL-1)];
+            xlswrite([r_path r_file],R(r_fl_data:r_fl_data+N-1,r_col_data_2:r_col_data_2+cdL-1),rev_sheet,P2);
+            
+            P3 = [RCToExcelA1(r_fl_data,r_col_data_2+cdL) ':' RCToExcelA1(r_fl_data+N-1,r_col_data_2+cdL)];
+            xlswrite([r_path r_file],stud_data_date(:,r_col_data_1),rev_sheet,P3);
+            
+            P4 = [RCToExcelA1(o_fl_data,o_col_data_2) ':' RCToExcelA1(o_fl_data+N-1,o_col_data_2+cdLo-1)];
+            xlswrite([r_path r_file],O(o_fl_data:o_fl_data+N-1,o_col_data_2:o_col_data_2+cdLo-1),abi_sheet,P4);
+        otherwise
+            % CASE OTHERS
+            MSGtoConsole('Sistema Operativo no soportado.',string_length_console,handles);
+            return; 
+    end
+    MSGtoConsole('Finalizado Correctamente',string_length_console,handles);
+    jScrollPane = findjobj(handles.text4);jVSB = jScrollPane.getVerticalScrollBar;jVSB.setValue(jVSB.getMaximum);
     drawnow;
     
 catch me_err
@@ -384,34 +511,44 @@ catch me_err
 end
 
 
-function outArr = addResp(outArr,rut,val,j,r_col_rut,r_col_data,handles,string_length_console)
-    if length(str2num(str2mat(outArr(:,r_col_rut)))) > 1
-        lV = find(~(str2num(str2mat(outArr(:,r_col_rut))) - rut));
+function outArr = addResp(outArr,rut,val, j , col_rut , col_data , log_disp,handles,string_length_console)
+    if length(str2num(str2mat(outArr(:,col_rut)))) > 1 %#ok<*DSTRMT>
+        rut_list = str2num(str2mat(outArr(:,col_rut)));
+        rut_list(isnan(rut_list)) = -1;
+        rut_check = rut_list - rut;
+        lV = find(~rut_check);
+        if length(lV) > 1
+            log_s = ['    RUTS DUPLICADOS EN PLANILLA: Nº ' num2str(lV(1)) ' y Nº ' num2str(lV(2))];
+            log_s = fillString(log_s,string_length_console);
+            handles.text4.String = [handles.text4.String; log_s];
+            lV = lV(1);
+        end
     else
         lV = 1;
     end
     if isempty(lV)
-        log_s = ['    RUT NO ENCONTRADO : ' num2str(rut)];
-        log_s = fillString(log_s,string_length_console);
-        handles.text4.String = [handles.text4.String; log_s]; 
+        if log_disp
+            log_s = ['    RUT NO ENCONTRADO : ' num2str(rut)];
+            log_s = fillString(log_s,string_length_console);
+            handles.text4.String = [handles.text4.String; log_s]; 
+        end
     else
         val_check = regexp(num2str(val),'[\0-9]{4}\-[\0-9]{2}\-[\0-9]\s[\0-9]{2}:[\0-9]{2}:[\0-9]{2}');
         if ~isempty(val_check)
             if val_check
                 try
-                    if isempty(outArr{lV,j+r_col_data-1})
+                    if isempty(outArr{lV,j + col_data - 1})
                         curr_date = '1900-01-01 00:00:00';                        
                     else
-                        curr_date = outArr{lV,j+r_col_data-1};                        
+                        curr_date = outArr{lV,j + col_data-1};                        
                     end
-                catch date_err
+                catch
                     curr_date = '1900-01-01 00:00:00';
                 end
-                %disp(['Comp ' curr_date ' v/s ' val 'last date is ' last_date(curr_date,val)])
-                outArr{lV,j+r_col_data-1} = last_date(curr_date,val);
+                outArr{lV,j + col_data - 1} = last_date(curr_date,val);
             end
         else
-            outArr{lV,j+r_col_data-1} = val; 
+            outArr{lV,j + col_data - 1} = val;
         end
     end
 
@@ -421,7 +558,7 @@ function p = isequalCellArray(A,B)
         for c = 1:cA 
             auxA = A{f,c};
             if isequal(auxA,B)
-                p(f,c) = 1;
+                p(f,c) = 1; %#ok<*AGROW>
             else
                 p(f,c) = 0;
             end
@@ -454,7 +591,7 @@ function date = last_date(date1,date2)
     disp(['DATE 1: ' date1 ' - DATE 2: ' date2])
     date1_1 = strsplit(date1,'-');
     c = strsplit(date1_1{3},' ');
-    date1_1 = {date1_1{1:2}, c{:}};
+    date1_1 = {date1_1{1:2}, c{:}}; %#ok<*CCAT>
     c = strsplit(date1_1{4},':');
     date1_1 = {date1_1{1:3}, c{:}};
     date1_N = str2double(date1_1);
@@ -480,4 +617,22 @@ function date = last_date(date1,date2)
     end
 
 
-        
+function MSGtoConsole(string,string_length_console,handles)    
+    log_s = string;
+    log_s = fillString(log_s,string_length_console);
+    handles.text4.String = [handles.text4.String; log_s];
+    
+function string = multiStrrep(string,cell1,cell2)
+    cell1 = cellstr(cell1);
+    cell2 = cellstr(cell2);
+    if (numel(cell1) == length(cell1)) && (numel(cell2) == length(cell2))
+        if numel(cell1) == numel(cell2)            
+            for msr = 1:numel(cell1)
+                string = strrep(string,cell1{msr},cell2{msr});
+            end
+        else
+            disp('Ambos Cell Array deben tener el mismo largo');
+        end
+    else
+        disp('Ambos Cell Array deben ser vectores');
+    end
